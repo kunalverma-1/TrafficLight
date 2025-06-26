@@ -1,6 +1,11 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
+
+import matplotlib
+matplotlib.use('Agg')  # Use a non-interactive backend
+import matplotlib.pyplot as plt
+
 import os
 import sys
 import time
@@ -119,7 +124,7 @@ class Agent:
                 ),
                 "reward_memory":np.zeros(self.max_mem, dtype=np.float32),
                 "action_memory": np.zeros(self.max_mem, dtype=np.int32),
-                "terminal_memory": np.zeros(self.max_mem, dtype=np.bool),
+                "terminal_memory": np.zeros(self.max_mem, dtype=np.bool_),
                 "mem_cntr": 0,
                 "iter_cntr": 0,
             }
@@ -216,19 +221,26 @@ def run(train=True,model_name="model",epochs=50,steps=500,ard=False):
     )
 
     if not train:
-        brain.Q_eval.load_state_dict(torch.load(f'models/{model_name}.bin',map_location=brain.Q_eval.device))
+        try:
+            brain.Q_eval.load_state_dict(torch.load(f'models/{model_name}.bin', map_location=brain.Q_eval.device))
+        except RuntimeError as e:
+            print(f"\n[ERROR] Failed to load model state dict: {e}\n")
+            print("This usually means the saved model was trained with different input dimensions or architecture.\n" 
+                  "Please retrain the model or use a compatible model file. Exiting.")
+            traci.close()
+            sys.exit(1)
 
     print(brain.Q_eval.device)
     traci.close()
     for e in range(epochs):
         if train:
-            traci.start(
-            [checkBinary("sumo"), "-c", "configuration.sumocfg", "--tripinfo-output", "tripinfo.xml"]
-            )
+            traci.start([
+                checkBinary("sumo"), "-c", "configuration.sumocfg", "--tripinfo-output", "tripinfo.xml"
+            ])
         else:
-            traci.start(
-            [checkBinary("sumo-gui"), "-c", "configuration.sumocfg", "--tripinfo-output", "tripinfo.xml"]
-            )
+            traci.start([
+                checkBinary("sumo-gui"), "-c", "configuration.sumocfg", "--tripinfo-output", "tripinfo.xml"
+            ])
 
         print(f"epoch: {e}")
         select_lane = [

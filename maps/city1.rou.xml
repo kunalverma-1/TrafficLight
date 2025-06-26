@@ -27,6 +27,10 @@
 </configuration>
 -->
 
+<vType id="car" accel="1.0" decel="4.5" sigma="0.5" length="5" maxSpeed="25"/>
+<vType id="bus" accel="0.8" decel="4.0" sigma="0.5" length="12" maxSpeed="18" color="1,0,0"/>
+<vType id="truck" accel="0.6" decel="3.5" sigma="0.5" length="8" maxSpeed="15" color="0,0,1"/>
+
 <routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
     <vehicle id="0" depart="0.00">
         <route edges="gneE18 -gneE22 -gneE7 -gneE6 -gneE2 -gneE1"/>

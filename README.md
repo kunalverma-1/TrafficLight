@@ -84,3 +84,23 @@ This project is an AI-powered Intelligent Traffic Light Management System design
 
 ---
 For further details, see the code in `train2.py` and the SUMO configuration and route files in the `maps/` directory.
+
+## Recent Enhancements
+### Emergency Vehicle Prioritization Framework
+- The original ambulance-only prioritization mechanism was extended into a multi-class emergency response system.
+
+- Priority Levels:
+
+- Ambulance (Priority 3)
+- Fire Truck (Priority 2)
+- Police Vehicle (Priority 1)
+
+- The reinforcement learning reward function was modified to dynamically adjust penalties based on emergency vehicle priority, enabling more adaptive traffic signal control.
+
+### Traffic Analytics Module
+- An analytics layer was introduced to evaluate traffic performance through:
+- Congestion Score
+- Traffic Efficiency Score
+- Emergency Priority Score
+
+The analytics framework supports future visualization and benchmarking extensions.

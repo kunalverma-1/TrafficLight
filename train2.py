@@ -66,17 +66,37 @@ def phaseDuration(junction, phase_time, phase_state):
     traci.trafficlight.setPhaseDuration(junction, phase_time)
 
 
-def get_ambulance_presence(lanes):
-    """Returns a list with 1 if an ambulance is present in the lane, else 0."""
-    ambulance_per_lane = []
+def get_emergency_vehicle_presence(lanes):
+    """
+    Returns:
+    3 -> ambulance present
+    2 -> fire truck present
+    1 -> police vehicle present
+    0 -> no emergency vehicle
+    """
+
+    emergency_per_lane = []
+
     for l in lanes:
-        found = 0
+
+        priority = 0
+
         for vid in traci.lane.getLastStepVehicleIDs(l):
-            if traci.vehicle.getTypeID(vid) == 'ambulance':
-                found = 1
-                break
-        ambulance_per_lane.append(found)
-    return ambulance_per_lane
+
+            vehicle_type = traci.vehicle.getTypeID(vid)
+
+            if vehicle_type == "ambulance":
+                priority = 3
+
+            elif vehicle_type == "firetruck":
+                priority = max(priority, 2)
+
+            elif vehicle_type == "police":
+                priority = max(priority, 1)
+
+        emergency_per_lane.append(priority)
+
+    return emergency_per_lane
 
 
 def filter_known_lanes(lane_list):
@@ -326,11 +346,11 @@ def run(train=True,model_name="model",epochs=50,steps=500,ard=False):
                 phases = junction_phases[junction]
                 waiting_time = get_waiting_time(lanes)
                 total_time += waiting_time
-                ambulance_presence = get_ambulance_presence(lanes)
-                # Ambulance prioritization: if any ambulance present, prioritize that phase
+                emergency_presence = get_emergency_vehicle_presence(lanes)
+                # Emergency vehicle prioritization: if any ambulance present, prioritize that phase
                 prioritized = False
-                for lane_idx, has_ambulance in enumerate(ambulance_presence):
-                    if has_ambulance:
+                for lane_idx, priority in enumerate(emergency_presence):
+                    if priority > 0:
                         # Find which phase(s) serve this lane
                         for phase_idx, phase in enumerate(phases):
                             # If this phase gives green to this lane
@@ -341,11 +361,11 @@ def run(train=True,model_name="model",epochs=50,steps=500,ard=False):
                                     phaseDuration(junction, min_duration + 10, phase.state)
                                     traffic_lights_time[junction] = min_duration + 10
                                     prev_action[junction] = phase_idx
-                                reward = -1 * waiting_time - 1000  # Strong penalty for ambulance waiting
+                                reward = -1 * waiting_time - (priority * 500)  # Strong penalty for ambulance waiting
                                 prioritized = True
                                 break
                         if not prioritized:
-                            print(f"[WARNING] Ambulance detected in lane {lanes[lane_idx]} at junction {junction}, but no phase found to prioritize it.")
+                            print(f"[WARNING] Emergency vehicle detected in lane {lanes[lane_idx]} at junction {junction}, but no phase found to prioritize it.")
                         break
                 if prioritized:
                     continue  # Skip RL for this junction this step
